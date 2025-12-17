@@ -1,0 +1,43 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: got-train-and-register
+experiment_name: exam
+
+inputs:
+  train_ready:
+    type: mltable
+    path: azureml:got-train-ready:1
+  test_ready:
+    type: mltable
+    path: azureml:got-test-ready:1
+
+outputs:
+  trained_model:
+    type: uri_folder
+    mode: upload
+  metrics_folder:
+    type: uri_folder
+    mode: upload
+
+settings:
+  default_compute: azureml:serverless
+
+jobs:
+  train:
+    type: command
+    component: azureml:got_train_dt:5
+    inputs:
+      train_ready: ${{parent.inputs.train_ready}}
+      test_ready: ${{parent.inputs.test_ready}}
+    outputs:
+      model_output: ${{parent.outputs.trained_model}}
+      metrics_output: ${{parent.outputs.metrics_folder}}
+
+  register:
+    type: command
+    identity:
+      type: user_identity
+    component: azureml://registries/azureml/components/register_model/versions/0.0.21
+    inputs:
+      model_path: ${{parent.jobs.train.outputs.model_output}}
+      model_name: got-house-dt

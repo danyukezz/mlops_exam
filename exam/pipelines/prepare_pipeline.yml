@@ -1,0 +1,33 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: got-prepare-pipeline
+
+inputs:
+  raw_data:
+    type: mltable
+    path: azureml:persona_dataset:1
+
+outputs:
+  train_ready:
+    type: mltable
+    name: got-train-ready
+    version: "1"
+    mode: upload
+  test_ready:
+    type: mltable
+    name: got-test-ready
+    version: "1"
+    mode: upload
+
+settings:
+  default_compute: azureml:serverless
+
+jobs:
+  prep:
+    type: command
+    component: azureml:got_prepare_data:1
+    inputs:
+      input_folder: ${{parent.inputs.raw_data}}
+    outputs:
+      out_train: ${{parent.outputs.train_ready}}
+      out_test: ${{parent.outputs.test_ready}}
